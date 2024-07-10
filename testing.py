@@ -17,7 +17,6 @@ def extract_text_from_pdf(pdf_file):
 
 def extract_financial_data(text):
     data = {}
-
     patterns = {
         'total_assets': r'Total Assets:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
         'total_liabilities': r'Total Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
@@ -25,19 +24,21 @@ def extract_financial_data(text):
         'current_liabilities': r'Current Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
         'total_profits': r'Total comprehensive income for the year:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)'
     }
-
     for key, pattern in patterns.items():
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             value = match.group(1).replace(',', '')
-            if value.startswith('(') and value.endswith(')'):
-                data[key] = -float(value[1:-1])
-            else:
-                data[key] = float(value)
+            try:
+                if value.startswith('(') and value.endswith(')'):
+                    data[key] = -float(value[1:-1])
+                else:
+                    data[key] = float(value)
+            except ValueError:
+                st.warning(f"Couldn't convert {key.replace('_', ' ').title()} value to a number: {value}")
+                data[key] = 0
         else:
             st.warning(f"Couldn't find {key.replace('_', ' ').title()} in the document.")
             data[key] = 0
-
     return data
 
 def calculate_financials(data):
