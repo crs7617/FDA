@@ -14,13 +14,12 @@ def extract_text_from_pdf(pdf_file):
     for page in reader.pages:
         text += page.extract_text()
     return text
-
 def extract_financial_data(text):
     data = {}
     patterns = {
         'total_assets': r'Total Assets:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
         'total_liabilities': r'Total Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
-        'cash_balance': r'Net Cash generated from operating activities:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)',
+        'cash_balance': r'Net Cash generated from operating activities (A):?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)',
         'current_liabilities': r'Current Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
         'total_profits': r'Total comprehensive income for the year:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)'
     }
@@ -31,16 +30,23 @@ def extract_financial_data(text):
             try:
                 if value.startswith('(') and value.endswith(')'):
                     data[key] = -float(value[1:-1])
+                elif value.startswith('('):  # Handle cases where the closing parenthesis is missing
+                    data[key] = -float(value[1:])
                 else:
                     data[key] = float(value)
             except ValueError:
                 st.warning(f"Couldn't convert {key.replace('_', ' ').title()} value to a number: {value}")
                 data[key] = 0
         else:
-            st.warning(f"Couldn't find {key.replace('_', ' ').title()} in the document.")
+            if key == 'cash_balance':
+                st.warning("Couldn't find Net Cash generated from operating activities in the document.")
+            elif key == 'total_profits':
+                st.warning("Couldn't find Total comprehensive income for the year in the document.")
+            else:
+                st.warning(f"Couldn't find {key.replace('_', ' ').title()} in the document.")
             data[key] = 0
     return data
-
+     
 def calculate_financials(data):
     equity = data['total_assets'] - data['total_liabilities']
     try:
@@ -56,19 +62,22 @@ def calculate_financials(data):
         'debt_to_equity_ratio': debt_to_equity_ratio,
         'net_cash_flow': net_cash_flow
     }
-
 def compare_net_cash_flow_to_profits(net_cash_flow, total_profits):
-    if net_cash_flow < 0 or total_profits < 0:
-        return "Cannot compare net cash flow to profits due to negative values."
+    if net_cash_flow < 0 and total_profits < 0:
+        return f"Both net cash flow (${net_cash_flow:.2f}) and total profits (${total_profits:.2f}) are negative."
+    elif net_cash_flow < 0:
+        return f"Net cash flow is negative (${net_cash_flow:.2f}), while total profits are ${total_profits:.2f}."
+    elif total_profits < 0:
+        return f"Total profits are negative (${total_profits:.2f}), while net cash flow is ${net_cash_flow:.2f}."
     
     difference = net_cash_flow - total_profits
     if net_cash_flow > total_profits:
-        return f"Net cash flow is ${difference:.2f} higher than total profits."
+        return f"Net cash flow (${net_cash_flow:.2f}) is ${difference:.2f} higher than total profits (${total_profits:.2f})."
     elif net_cash_flow < total_profits:
-        return f"Net cash flow is ${-difference:.2f} lower than total profits."
+        return f"Net cash flow (${net_cash_flow:.2f}) is ${-difference:.2f} lower than total profits (${total_profits:.2f})."
     else:
-        return "Net cash flow is equal to total profits."
-
+        return f"Net cash flow is equal to total profits (${net_cash_flow:.2f})."
+        
 st.title('Financial Document Analyzer')
 
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
