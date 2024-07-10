@@ -18,49 +18,25 @@ def extract_text_from_pdf(pdf_file):
 def extract_financial_data(text):
     data = {}
 
-    assets_match = re.search(r'Total Assets:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
-    liabilities_match = re.search(r'Total Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
-    cash_balance_match = re.search(r'Net Cash generated from operating activities:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)', text, re.IGNORECASE)
-    current_liabilities_match = re.search(r'Current Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
-    total_profits_match = re.search(r'Total comprehensive income for the year:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)', text, re.IGNORECASE)
-    
-    if assets_match:
-        data['total_assets'] = float(assets_match.group(1).replace(',', ''))
-    else:
-        st.warning("Couldn't find Total Assets in the document.")
-        data['total_assets'] = 0
+    patterns = {
+        'total_assets': r'Total Assets:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
+        'total_liabilities': r'Total Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
+        'cash_balance': r'Net Cash generated from operating activities:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)',
+        'current_liabilities': r'Current Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
+        'total_profits': r'Total comprehensive income for the year:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)'
+    }
 
-    if liabilities_match:
-        data['total_liabilities'] = float(liabilities_match.group(1).replace(',', ''))
-    else:
-        st.warning("Couldn't find Total Liabilities in the document.")
-        data['total_liabilities'] = 0
-
-    if cash_balance_match:
-        cash_balance = cash_balance_match.group(1).replace(',', '')
-        if cash_balance.startswith('(') and cash_balance.endswith(')'):
-            data['cash_balance'] = -float(cash_balance[1:-1])
+    for key, pattern in patterns.items():
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            value = match.group(1).replace(',', '')
+            if value.startswith('(') and value.endswith(')'):
+                data[key] = -float(value[1:-1])
+            else:
+                data[key] = float(value)
         else:
-            data['cash_balance'] = float(cash_balance)
-    else:
-        st.warning("Couldn't find Net Cash generated from operating activities in the document.")
-        data['cash_balance'] = 0
-
-    if current_liabilities_match:
-        data['current_liabilities'] = float(current_liabilities_match.group(1).replace(',', ''))
-    else:
-        st.warning("Couldn't find Current Liabilities in the document.")
-        data['current_liabilities'] = 0
-
-    if total_profits_match:
-        total_profits = total_profits_match.group(1).replace(',', '')
-        if total_profits.startswith('(') and total_profits.endswith(')'):
-            data['total_profits'] = -float(total_profits[1:-1])
-        else:
-            data['total_profits'] = float(total_profits)
-    else:
-        st.warning("Couldn't find Total comprehensive income for the year in the document.")
-        data['total_profits'] = 0
+            st.warning(f"Couldn't find {key.replace('_', ' ').title()} in the document.")
+            data[key] = 0
 
     return data
 
