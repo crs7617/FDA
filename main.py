@@ -20,9 +20,9 @@ def extract_financial_data(text):
 
     assets_match = re.search(r'Total Assets:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
     liabilities_match = re.search(r'Total Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
-    cash_balance_match = re.search(r'Cash Balance:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
+    cash_balance_match = re.search(r'Net Cash genreated from operating activities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
     current_liabilities_match = re.search(r'Current Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
-    total_profits_match = re.search(r'Total Profits:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
+    total_profits_match = re.search(r'Total comprehensive income for the year:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)', text, re.IGNORECASE)
     
     if assets_match:
         data['total_assets'] = float(assets_match.group(1).replace(',', ''))
@@ -115,3 +115,5 @@ if uploaded_file is not None:
         
         st.subheader('AI Analysis')
         st.write(response.text)
+
+
