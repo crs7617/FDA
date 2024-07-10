@@ -14,12 +14,13 @@ def extract_text_from_pdf(pdf_file):
     for page in reader.pages:
         text += page.extract_text()
     return text
+
 def extract_financial_data(text):
     data = {}
     patterns = {
         'total_assets': r'Total Assets:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
         'total_liabilities': r'Total Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
-        'cash_balance': r'Net Cash generated from operating activities (A):?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)',
+        'cash_balance': r'Net cash generated from operating activities \(A\):?\s*(\d+(?:,\d{3})*(?:\.\d+)?)',
         'current_liabilities': r'Current Liabilities:?\s*\$?(\d+(?:,\d{3})*(?:\.\d+)?)',
         'total_profits': r'Total comprehensive income for the year:?\s*\$?(\(?\d+(?:,\d{3})*(?:\.\d+)?\)?)'
     }
@@ -77,7 +78,7 @@ def compare_net_cash_flow_to_profits(net_cash_flow, total_profits):
         return f"Net cash flow (${net_cash_flow:.2f}) is ${-difference:.2f} lower than total profits (${total_profits:.2f})."
     else:
         return f"Net cash flow is equal to total profits (${net_cash_flow:.2f})."
-        
+
 st.title('Financial Document Analyzer')
 
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
