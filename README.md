@@ -1,6 +1,6 @@
 # Financial Document Analyzer
 
-A Streamlit application to extract and analyze financial data from PDF documents using Python and AI.
+An application to extract and analyze financial data from PDF documents using Python and AI.
 
 ## Features
 
